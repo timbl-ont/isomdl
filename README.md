@@ -176,3 +176,12 @@ revoked".
 Worked examples of both:
 [an_eudi_pid_presents_end_to_end and a_custom_profile_validates_through_the_reader_api](src/presentation/tests/end_to_end.rs),
 and [a_custom_profile_can_express_eu_age_verification](src/definitions/x509/tests.rs).
+
+#### ISO/IEC TS 23220-4 photo ID
+
+The photo ID of ISO/IEC TS 23220-4 Annex C (doc type `org.iso.23220.photoid.1`) has typed
+issuance namespaces alongside the mDL's: `org.iso.23220.1` (Table C.1, encoded per
+ISO/IEC TS 23220-2) and `org.iso.23220.photoid.1` (Table C.2).
+`namespaces::photo_id::PhotoId` bundles the two and produces the map
+`Mdoc::builder().namespaces(..)` takes; validate the result under `MdocProfile::ISO_23220`.
+See [a_photo_id_presents_end_to_end](src/presentation/tests/end_to_end.rs).

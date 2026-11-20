@@ -533,7 +533,7 @@ pub(crate) fn test_namespaces() -> Namespaces {
 /// [`PID_DOC_TYPE`]: an ISO photo ID and an EUDI Person Identification Data credential are
 /// different credentials on different arcs, and neither is a passport. Used here only as a
 /// credential the mDL rules were not written for.
-pub(crate) const PHOTO_ID_DOC_TYPE: &str = "org.iso.23220.photoid.1";
+pub(crate) use crate::definitions::PHOTO_ID_DOC_TYPE;
 
 /// The ISO/IEC 18013-5 mDL namespace.
 pub(crate) const ISOMDL_NAMESPACE: &str = "org.iso.18013.5.1";
@@ -587,4 +587,42 @@ pub(crate) fn pid_pki() -> TestPki {
         crate::definitions::x509::test::default_validity(),
         EUDI_PID_DS_EKU,
     )
+}
+
+/// A PKI whose document signer carries the ISO/IEC TS 23220-4 key purpose, taken from the
+/// shipped [`MdocProfile::ISO_23220`](crate::definitions::x509::validation::MdocProfile::ISO_23220).
+pub(crate) fn photo_id_pki() -> TestPki {
+    TestPki::generate(
+        TestPki::CRL_URL.to_string(),
+        crate::definitions::x509::test::default_validity(),
+        crate::definitions::x509::validation::MdocProfile::ISO_23220
+            .issuer
+            .document_signer_eku,
+    )
+}
+
+/// A photo ID's issuance namespaces, built through the typed
+/// [`PhotoId`](crate::definitions::namespaces::photo_id::PhotoId) rather than by hand, so
+/// the encodings are the library's own.
+pub(crate) fn photo_id_namespaces() -> crate::issuance::Namespaces {
+    use crate::definitions::{namespaces::photo_id::PhotoId, traits::FromJson};
+
+    PhotoId::from_json(&serde_json::json!({
+        "org.iso.23220.1": {
+            "family_name": "Smith",
+            "given_name": "Alice",
+            "birth_date": { "birth_date": "1990-04-01", "approximate_mask": "00000011" },
+            "portrait": include_str!("../../test/issuance/portrait.b64"),
+            "issue_date": "2025-01-01",
+            "expiry_date": "2035-01-01",
+            "issuing_authority": "Utopia Department of Identity",
+            "issuing_country": "UT",
+            "age_over_18": true
+        },
+        "org.iso.23220.photoid.1": {
+            "person_id": "1234567890"
+        }
+    }))
+    .expect("the sample photo ID should parse")
+    .into_namespaces()
 }

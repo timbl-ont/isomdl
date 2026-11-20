@@ -30,6 +30,10 @@ pub const MDL_DOC_TYPE: &str = "org.iso.18013.5.1.mDL";
 /// The EUDI Person Identification Data doc type, which is also its namespace.
 pub const EUDI_PID_DOC_TYPE: &str = "eu.europa.ec.eudi.pid.1";
 
+/// The ISO/IEC TS 23220-4 Annex C photo ID doc type, which is also the namespace of its
+/// photo-ID-specific data elements. See [`namespaces::photo_id`].
+pub const PHOTO_ID_DOC_TYPE: &str = "org.iso.23220.photoid.1";
+
 pub use device_response::{DeviceResponse, Document};
 pub use device_signed::{DeviceAuth, DeviceSigned};
 pub use issuer_signed::{IssuerSigned, IssuerSignedItem};

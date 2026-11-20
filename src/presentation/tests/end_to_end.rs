@@ -198,8 +198,8 @@ mod end_to_end {
     use crate::presentation::device::{Document, Documents, SessionManagerInit};
     use crate::presentation::reader;
     use crate::presentation::test_utils::{
-        self, eudi_pid_profile, pid_namespaces, pid_pki, Ask, TestExchange, PHOTO_ID_DOC_TYPE,
-        PID_DOC_TYPE, PID_MANDATORY_ATTRIBUTES,
+        self, eudi_pid_profile, photo_id_namespaces, photo_id_pki, pid_namespaces, pid_pki, Ask,
+        TestExchange, PHOTO_ID_DOC_TYPE, PID_DOC_TYPE, PID_MANDATORY_ATTRIBUTES,
     };
 
     use super::ISOMDL_NAMESPACE;
@@ -583,5 +583,45 @@ mod end_to_end {
                 "{name} did not survive the round trip"
             );
         }
+    }
+
+    /// An ISO/IEC TS 23220-4 Annex C photo ID, issued from the typed namespaces under the
+    /// 23220-4 key purposes and validated under [`MdocProfile::ISO_23220`].
+    ///
+    /// `birth_date` is asked for because its encoding differs from the mDL's: it is a map.
+    #[tokio::test]
+    async fn a_photo_id_presents_end_to_end() {
+        use crate::definitions::namespaces::org_iso_23220_1::NAMESPACE as ISO_23220_NAMESPACE;
+
+        let pki = photo_id_pki();
+        let mdoc = issue_test_mdoc_with_namespaces(
+            &pki,
+            PHOTO_ID_DOC_TYPE,
+            valid_for_a_year(),
+            photo_id_namespaces(),
+        )
+        .unwrap();
+
+        let outcome = present(
+            [mdoc],
+            pki.iaca_registry(),
+            &pki.fetcher(),
+            &[(
+                PHOTO_ID_DOC_TYPE,
+                ISO_23220_NAMESPACE,
+                &["family_name", "birth_date", "age_over_18"],
+            )],
+            &AnyDocType(MdocProfile::ISO_23220),
+        )
+        .await;
+
+        let elements =
+            &sole_valid_document(&outcome, PHOTO_ID_DOC_TYPE).namespaces[ISO_23220_NAMESPACE];
+        assert_eq!(elements["family_name"], serde_json::json!("Smith"));
+        assert_eq!(
+            elements["birth_date"],
+            serde_json::json!({ "birth_date": "1990-04-01", "approximate_mask": "00000011" })
+        );
+        assert_eq!(elements["age_over_18"], serde_json::json!(true));
     }
 }
